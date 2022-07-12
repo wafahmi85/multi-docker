@@ -1,58 +1,31 @@
 version: '3'
 services:
-  
-  postgres:
-    image: postgres:latest
-    environment:
-      - POSTGRES_PASSWORD=postgres_password
-
-  redis:
-    image: redis:latest
-
-  nginx:
-    restart: always
-    build:
-      dockerfile: Dockerfile.dev
-      context: ./nginx
-    ports:
-      - 8080:80
-    depends_on:
-      - api
-      - client
-
-  api:
-    build:
-      dockerfile: Dockerfile.dev
-      context: ./server
-    volumes:
-      - /app/node_modules
-      - ./server:/app 
-    environment:
-      - REDIS_HOST=redis
-      - REDIS_PORT=6379
-      - PGUSER=postgres
-      - PGHOST=postgres
-      - PGDATABASE=postgres
-      - PGPASSWORD=postgres_password
-      - PGPORT=5432
-
   client:
-    build:
-      dockerfile: Dockerfile.dev
-      context: ./client
-    volumes:
-      - /app/node_modules
-      - ./client:/app
+    image: wafahmi/multi-client
+    mem_limit: 128
+    hostname: client
+  api:
+    image: wafahmi/multi-api
+    mem_limit: 128
+    hostname: api
     environment:
-      - WDS_SOCKET_PORT=0
-
+      - REDIS_HOST=$REDIS_HOST
+      - REDIS_PORT=$REDIS_PORT
+      - PGUSER=$PGUSER
+      - PGHOST=$PGHOST
+      - PGDATABASE=$PGDATABASE
+      - PGPASSWORD=$PGPASSWORD
+      - PGPORT=$PGPORT
   worker:
-    build:
-      dockerfile: Dockerfile.dev
-      context: ./worker
-    volumes:
-      - /app/node_modules
-      - ./worker:/app
+    image: wafahmi/multi-worker
+    mem_limit: 128
+    hostname: worker
     environment:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
+  nginx:
+    image: wafahmi/multi-nginx
+    mem_limit: 128
+    hostname: worker
+    ports:
+      - 80:80
