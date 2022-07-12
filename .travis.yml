@@ -1,0 +1,25 @@
+language: generic
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t wafahmi/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run -e CI=true wafahmi/react-test npm test
+
+after_success:
+  - docker build -t wafahmi/multi-client ./client
+  - docker build -t wafahmi/multi-nginx ./nginx
+  - docker build -t wafahmi/multi-api ./server
+  - docker build -t wafahmi/multi-worker ./worker
+  # Login to docker hub
+  echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  #Push to docker hub
+  - docker push wafahmi/multi-client
+  - docker push wafahmi/multi-nginx
+  - docker push wafahmi/multi-api
+  - docker push wafahmi/multi-worker
+
+
